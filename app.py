@@ -7,10 +7,10 @@ model, processor = load_model(), load_processor()
 
 HEADER = """
 # Surya OCR Demo
-This demo will let you try surya, a multilingual OCR model.  It supports text detection now, but will support text recognition in the future.
+This demo will let you try surya, a multilingual OCR model.  It supports text detection now, but will support text recognition in the future. This HF Space will be updated.
 Notes:
 - This works best on documents with printed text.
-- Set DETECTOR_MODEL_CHECKPOINT=vikp/line_detector_math before running this app if you want better math detection.
+- Model and code by Vik Paruchuri.
 Learn more [here](https://github.com/VikParuchuri/surya).
 """.strip()
 
