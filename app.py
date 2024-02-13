@@ -3,7 +3,7 @@ import json
 from PIL import Image
 from surya.ocr import run_ocr
 from surya.detection import batch_detection
-from surya.model.segformer import load_model as load_det_model, load_processor as load_det_processor
+from surya.model.detection.segformer import load_model as load_det_model, load_processor as load_det_processor
 from surya.model.recognition.model import load_model as load_rec_model
 from surya.model.recognition.processor import load_processor as load_rec_processor
 from surya.postprocessing.heatmap import draw_polys_on_image
