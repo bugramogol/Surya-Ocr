@@ -2,7 +2,7 @@ import gradio as gr
 import json
 from PIL import Image
 from surya.ocr import run_ocr
-from surya.detection import batch_inference
+from surya.detection import batch_detection
 from surya.model.segformer import load_model as load_det_model, load_processor as load_det_processor
 from surya.model.recognition.model import load_model as load_rec_model
 from surya.model.recognition.processor import load_processor as load_rec_processor
@@ -23,7 +23,7 @@ def ocr_function(img, langs):
     return img_with_text, predictions
 
 def text_line_detection_function(img):
-    preds = batch_inference([img], det_model, det_processor)[0]
+    preds = batch_detection([img], det_model, det_processor)[0]
     img_with_lines = draw_polys_on_image(preds["polygons"], img)
     return img_with_lines, preds
 
