@@ -8,20 +8,23 @@ from surya.model.recognition.model import load_model as load_rec_model
 from surya.model.recognition.processor import load_processor as load_rec_processor
 from surya.postprocessing.heatmap import draw_polys_on_image
 
-# Carregar modelos e processadores
+# Load models and processors
 det_model, det_processor = load_det_model(), load_det_processor()
 rec_model, rec_processor = load_rec_model(), load_rec_processor()
 
-# Carregar opções de idioma
+# Assuming languages.json maps language codes to names, but we'll use codes directly for dropdown
 with open("languages.json", "r") as file:
     languages = json.load(file)
-language_options = [(language, code) for code, language in languages.items()]
+language_options = list(languages.keys())  # Use codes directly
 
 def ocr_function(img, lang_code):
-    # Ajuste aqui para garantir que lang_code é uma lista
-    predictions = run_ocr([img], [lang_code], det_model, det_processor, rec_model, rec_processor)[0]
-    img_with_text = draw_polys_on_image(predictions["polys"], img)
-    return img_with_text, predictions["text"]
+    predictions = run_ocr([img], [lang_code], det_model, det_processor, rec_model, rec_processor)
+    # Assuming predictions is a list of dictionaries, one per image
+    if predictions:
+        img_with_text = draw_polys_on_image(predictions[0]["polys"], img)
+        return img_with_text, predictions[0]
+    else:
+        return img, {"error": "No text detected"}
 
 def text_line_detection_function(img):
     preds = batch_inference([img], det_model, det_processor)[0]
@@ -32,14 +35,15 @@ with gr.Blocks() as app:
     gr.Markdown("# Surya OCR e Detecção de Linhas de Texto")
     with gr.Tab("OCR"):
         with gr.Column():
-            ocr_input_image = gr.Image(label="Imagem de Entrada para OCR", type="pil")
-            ocr_language_selector = gr.Dropdown(label="Selecione o Idioma para OCR", choices=language_options, value="en")
-            ocr_run_button = gr.Button("Executar OCR")
+            ocr_input_image = gr.Image(label="Input Image for OCR", type="pil")
+            ocr_language_selector = gr.Dropdown(label="Select Language for OCR", choices=language_options, value="en")
+            ocr_run_button = gr.Button("Run OCR")
         with gr.Column():
-            ocr_output_image = gr.Image(label="Imagem de Saída do OCR", type="pil", interactive=False)
-            ocr_text_output = gr.TextArea(label="Texto Reconhecido")
+            ocr_output_image = gr.Image(label="OCR Output Image", type="pil", interactive=False)
+            ocr_text_output = gr.TextArea(label="Recognized Text")
 
         ocr_run_button.click(fn=ocr_function, inputs=[ocr_input_image, ocr_language_selector], outputs=[ocr_output_image, ocr_text_output])
+
 
     with gr.Tab("Detecção de Linhas de Texto"):
         with gr.Column():
