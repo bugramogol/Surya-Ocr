@@ -18,9 +18,19 @@ with open("languages.json", "r") as file:
 language_options = [(code, language) for code, language in languages.items()]
 
 def ocr_function(img, langs):
-    predictions = run_ocr([img], langs.split(','), det_model, det_processor, rec_model, rec_processor)[0]
+    # Debugging: Print the languages input
+    print("Languages input:", langs)
+    lang_list = langs.split(',')
+    print("Language list:", lang_list)
+    
+    # Ensure we're passing a list of images and a list of languages with matching lengths
+    images = [img]  # Wrap the single image in a list
+    assert len(images) == len(lang_list), "Mismatch in the number of images and languages"
+    
+    predictions = run_ocr(images, lang_list, det_model, det_processor, rec_model, rec_processor)[0]
     img_with_text = draw_polys_on_image(predictions["polys"], img)
     return img_with_text, predictions
+
 
 def text_line_detection_function(img):
     preds = batch_detection([img], det_model, det_processor)[0]
