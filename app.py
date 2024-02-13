@@ -32,7 +32,7 @@ with gr.Blocks() as app:
     with gr.Tab("OCR"):
         with gr.Row():
             ocr_input_image = gr.Image(label="Input Image for OCR", type="pil")
-            ocr_language_selector = gr.Dropdown(label="Select Language(s) for OCR", choices=language_options, value="en", type="str")
+            ocr_language_selector = gr.Dropdown(label="Select Language(s) for OCR", choices=language_options, value="en")
             ocr_output_image = gr.Image(label="OCR Output Image", type="pil", interactive=False)
             ocr_json_output = gr.JSON(label="OCR JSON Output")
         ocr_button = gr.Button("Run OCR")
