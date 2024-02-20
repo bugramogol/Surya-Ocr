@@ -27,9 +27,9 @@ def ocr_function(img, lang_name):
     # Assuming predictions is a list of dictionaries, one per image
     if predictions:
         img_with_text = draw_polys_on_image(predictions[0]["polys"], img)
-        return img_with_text, predictions[0]
+        return img_with_text, predictions[0]["text"]
     else:
-        return img, {"error": "No text detected"}
+        return img, "No text detected"
 
 def text_line_detection_function(img):
     preds = batch_detection([img], det_model, det_processor)[0]
@@ -37,7 +37,7 @@ def text_line_detection_function(img):
     return img_with_lines, preds
 
 with gr.Blocks() as app:
-    gr.Markdown("# Surya OCR e Detecção de Linhas de Texto")
+    gr.Markdown("# Surya OCR and Text Line Detection")
     with gr.Tab("OCR"):
         with gr.Column():
             ocr_input_image = gr.Image(label="Input Image for OCR", type="pil")
@@ -48,17 +48,17 @@ with gr.Blocks() as app:
             ocr_text_output = gr.TextArea(label="Recognized Text")
 
         # Pass the input image and the language name to the ocr_function
-        ocr_run_button.click(fn=ocr_function, inputs=[ocr_input_image, ocr_language_selector.value], outputs=[ocr_output_image, ocr_text_output])
+        ocr_run_button.click(fn=ocr_function, inputs=[ocr_input_image, ocr_language_selector], outputs=[ocr_output_image, ocr_text_output])
 
-
-    with gr.Tab("Detecção de Linhas de Texto"):
+    with gr.Tab("Text Line Detection"):
         with gr.Column():
-            detection_input_image = gr.Image(label="Imagem de Entrada para Detecção", type="pil")
-            detection_run_button = gr.Button("Executar Detecção de Linhas de Texto")
+            detection_input_image = gr.Image(label="Input Image for Detection", type="pil")
+            detection_run_button = gr.Button("Run Text Line Detection")
         with gr.Column():
-            detection_output_image = gr.Image(label="Imagem de Saída da Detecção", type="pil", interactive=False)
-            detection_json_output = gr.JSON(label="Saída JSON da Detecção")
+            detection_output_image = gr.Image(label="Detection Output Image", type="pil", interactive=False)
+            detection_json_output = gr.JSON(label="Detection JSON Output")
 
+        # Pass the input image to the text_line_detection_function
         detection_run_button.click(fn=text_line_detection_function, inputs=detection_input_image, outputs=[detection_output_image, detection_json_output])
 
 if __name__ == "__main__":
