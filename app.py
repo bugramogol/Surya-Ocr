@@ -21,15 +21,18 @@ language_dict = {name: code for name, code in languages.items()}
 language_options = list(language_dict.keys())
 
 def ocr_function(img, lang_name):
+    print(f"OCR Function Called with lang_name: {lang_name}")  # Debug print
     # Get the language code from the dictionary
     lang_code = language_dict[lang_name]
+    print(f"Language Code: {lang_code}")  # Debug print
     predictions = run_ocr([img], [lang_code], det_model, det_processor, rec_model, rec_processor)
-    # Assuming predictions is a list of dictionaries, one per image
+    print(f"Predictions: {predictions}")  # Debug print
     if predictions:
         img_with_text = draw_polys_on_image(predictions[0]["polys"], img)
         return img_with_text, predictions[0]["text"]
     else:
         return img, "No text detected"
+
 
 def text_line_detection_function(img):
     preds = batch_detection([img], det_model, det_processor)[0]
