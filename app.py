@@ -12,12 +12,17 @@ from surya.postprocessing.heatmap import draw_polys_on_image
 det_model, det_processor = load_det_model(), load_det_processor()
 rec_model, rec_processor = load_rec_model(), load_rec_processor()
 
-# Assuming languages.json maps language codes to names, but we'll use codes directly for dropdown
+# Create a dictionary to map language names to codes
 with open("languages.json", "r") as file:
     languages = json.load(file)
-language_options = list(languages.keys())  # Use codes directly
+language_dict = {name: code for name, code in languages.items()}
 
-def ocr_function(img, lang_code):
+# Use the language names for the dropdown choices
+language_options = list(language_dict.keys())
+
+def ocr_function(img, lang_name):
+    # Get the language code from the dictionary
+    lang_code = language_dict[lang_name]
     predictions = run_ocr([img], [lang_code], det_model, det_processor, rec_model, rec_processor)
     # Assuming predictions is a list of dictionaries, one per image
     if predictions:
@@ -27,7 +32,7 @@ def ocr_function(img, lang_code):
         return img, {"error": "No text detected"}
 
 def text_line_detection_function(img):
-    preds = batch_inference([img], det_model, det_processor)[0]
+    preds = batch_detection([img], det_model, det_processor)[0]
     img_with_lines = draw_polys_on_image(preds["polygons"], img)
     return img_with_lines, preds
 
@@ -36,12 +41,13 @@ with gr.Blocks() as app:
     with gr.Tab("OCR"):
         with gr.Column():
             ocr_input_image = gr.Image(label="Input Image for OCR", type="pil")
-            ocr_language_selector = gr.Dropdown(label="Select Language for OCR", choices=language_options, value="en")
+            ocr_language_selector = gr.Dropdown(label="Select Language for OCR", choices=language_options, value="English")
             ocr_run_button = gr.Button("Run OCR")
         with gr.Column():
             ocr_output_image = gr.Image(label="OCR Output Image", type="pil", interactive=False)
             ocr_text_output = gr.TextArea(label="Recognized Text")
 
+        # Pass the input image and the language name to the ocr_function
         ocr_run_button.click(fn=ocr_function, inputs=[ocr_input_image, ocr_language_selector.value], outputs=[ocr_output_image, ocr_text_output])
 
 
