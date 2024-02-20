@@ -38,10 +38,12 @@ def ocr_function(img, lang_name):
 
 def text_line_detection_function(img):
     print("Text Line Detection Function Called")
-    preds = batch_detection([img], det_model, det_processor)[0]
+    preds = batch_detection([img], det_model, det_processor)[0]  # Assuming this returns a DetectionResult object
     print(f"Detection Predictions: {preds}")
-    img_with_lines = draw_polys_on_image(preds["polygons"], img)
+    # Adjusted access to properties of preds
+    img_with_lines = draw_polys_on_image(preds.polygons, img)  # Assuming preds has a .polygons attribute
     return img_with_lines, preds
+
 
 with gr.Blocks() as app:
     gr.Markdown("# Surya OCR and Text Line Detection")
