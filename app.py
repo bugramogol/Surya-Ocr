@@ -42,7 +42,7 @@ with gr.Blocks() as app:
             ocr_output_image = gr.Image(label="OCR Output Image", type="pil", interactive=False)
             ocr_text_output = gr.TextArea(label="Recognized Text")
 
-        ocr_run_button.click(fn=ocr_function, inputs=[ocr_input_image, ocr_language_selector], outputs=[ocr_output_image, ocr_text_output])
+        ocr_run_button.click(fn=ocr_function, inputs=[ocr_input_image, ocr_language_selector[0]], outputs=[ocr_output_image, ocr_text_output])
 
 
     with gr.Tab("Detecção de Linhas de Texto"):
