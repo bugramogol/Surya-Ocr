@@ -4,8 +4,6 @@ import subprocess
 from PIL import Image
 import os
 import tempfile
-import sys
-sys.setdefaultencoding('utf-8')
 
 # Função auxiliar para salvar imagem temporariamente e retornar o caminho
 def save_temp_image(img):
