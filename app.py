@@ -4,58 +4,78 @@ import subprocess
 from PIL import Image
 import os
 import tempfile
+import logging
+
+# Configuração básica de logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def save_temp_image(img):
     temp_dir = tempfile.mkdtemp()
     img_path = os.path.join(temp_dir, "input_image.png")
     img.save(img_path)
+    logging.info(f"Imagem salva em {img_path}")
     return img_path, temp_dir
+
+def run_command(command):
+    try:
+        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, encoding='utf-8')
+        logging.info("Command Output: " + result)
+        return result
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Command failed with error: {e.output}")
+        return None
 
 def ocr_function_cli(img, lang_name):
     img_path, temp_dir = save_temp_image(img)
     command = f"surya_ocr {img_path} --langs {lang_name} --images --results_dir {temp_dir}"
-    try:
-        subprocess.run(command, shell=True, check=True, encoding='utf-8')
-    except subprocess.CalledProcessError as e:
-        print(f"OCR command failed: {e.output}")
+    if run_command(command) is None:
         return img, "OCR failed"
+
     result_img_path = os.path.join(temp_dir, "image_with_text.png")
     result_text_path = os.path.join(temp_dir, "results.json")
+
     if os.path.exists(result_img_path):
         result_img = Image.open(result_img_path)
     else:
         result_img = img
+
     if os.path.exists(result_text_path):
         with open(result_text_path, "r", encoding='utf-8') as file:
             result_text = json.load(file)
         text_output = "\n".join([str(page) for page in result_text.values()])
     else:
         text_output = "No text detected"
+
+    # Limpeza movida para depois da leitura dos resultados
     os.remove(img_path)
+    logging.info(f"Limpeza concluída para {img_path}")
     return result_img, text_output
 
 def text_line_detection_function_cli(img):
     img_path, temp_dir = save_temp_image(img)
     command = f"surya_detect {img_path} --images --results_dir {temp_dir}"
-    try:
-        subprocess.run(command, shell=True, check=True, encoding='utf-8')
-    except subprocess.CalledProcessError as e:
-        print(f"Text line detection command failed: {e.output}")
+    if run_command(command) is None:
         return img, {"error": "Detection failed"}
+
     result_img_path = os.path.join(temp_dir, "image_with_lines.png")
     result_json_path = os.path.join(temp_dir, "results.json")
+
     if os.path.exists(result_img_path):
         result_img = Image.open(result_img_path)
     else:
         result_img = img
+
     if os.path.exists(result_json_path):
         with open(result_json_path, "r", encoding='utf-8') as file:
             result_json = json.load(file)
     else:
         result_json = {"error": "No detection results found"}
-    os.remove(img_path)
-    return result_img, result_json
 
+    # Limpeza movida para depois da leitura dos resultados
+    os.remove(img_path)
+    logging.info(f"Limpeza concluída para {img_path}")
+    return result_img, result_json
+    
 with gr.Blocks() as app:
     gr.Markdown("# Surya OCR and Text Line Detection via CLI")
 
