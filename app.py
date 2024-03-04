@@ -6,6 +6,10 @@ import os
 import tempfile
 import logging
 
+# Load language mappings from JSON file
+with open("languages.json", "r", encoding='utf-8') as file:
+    language_map = json.load(file)
+
 # Configuração básica de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -29,7 +33,11 @@ def run_command(command):
 
 def ocr_function_cli(img, lang_name):
     img_path, temp_dir = save_temp_image(img)
-    command = f"surya_ocr {img_path} --langs {lang_name} --images --results_dir {temp_dir}"
+
+    # Get language abbreviation from language_map
+    lang_code = language_map.get(lang_name, "en")  # Default to English if not found
+
+    command = f"surya_ocr {img_path} --langs {lang_code} --images --results_dir {temp_dir}"
     if run_command(command) is None:
         return img, "OCR failed"
 
@@ -84,103 +92,11 @@ with gr.Blocks() as app:
     with gr.Tab("OCR"):
         with gr.Column():
             ocr_input_image = gr.Image(label="Input Image for OCR", type="pil")
+
+            # Use language names for display in the dropdown
             ocr_language_selector = gr.Dropdown(
                 label="Select Language for OCR",
-                choices=[
-                    "Afrikaans",
-                    "Amharic",
-                    "Arabic",
-                    "Assamese",
-                    "Azerbaijani",
-                    "Belarusian",
-                    "Bulgarian",
-                    "Bengali",
-                    "Breton",
-                    "Bosnian",
-                    "Catalan",
-                    "Czech",
-                    "Welsh",
-                    "Danish",
-                    "German",
-                    "Greek",
-                    "English",
-                    "Esperanto",
-                    "Spanish",
-                    "Estonian",
-                    "Basque",
-                    "Persian",
-                    "Finnish",
-                    "French",
-                    "Western Frisian",
-                    "Irish",
-                    "Scottish Gaelic",
-                    "Galician",
-                    "Gujarati",
-                    "Hausa",
-                    "Hebrew",
-                    "Hindi",
-                    "Croatian",
-                    "Hungarian",
-                    "Armenian",
-                    "Indonesian",
-                    "Icelandic",
-                    "Italian",
-                    "Japanese",
-                    "Javanese",
-                    "Georgian",
-                    "Kazakh",
-                    "Khmer",
-                    "Kannada",
-                    "Korean",
-                    "Kurdish",
-                    "Kyrgyz",
-                    "Latin",
-                    "Lao",
-                    "Lithuanian",
-                    "Latvian",
-                    "Malagasy",
-                    "Macedonian",
-                    "Malayalam",
-                    "Mongolian",
-                    "Marathi",
-                    "Malay",
-                    "Burmese",
-                    "Nepali",
-                    "Dutch",
-                    "Norwegian",
-                    "Oromo",
-                    "Oriya",
-                    "Punjabi",
-                    "Polish",
-                    "Pashto",
-                    "Portuguese",
-                    "Romanian",
-                    "Russian",
-                    "Sanskrit",
-                    "Sindhi",
-                    "Sinhala",
-                    "Slovak",
-                    "Slovenian",
-                    "Somali",
-                    "Albanian",
-                    "Serbian",
-                    "Sundanese",
-                    "Swedish",
-                    "Swahili",
-                    "Tamil",
-                    "Telugu",
-                    "Thai",
-                    "Tagalog",
-                    "Turkish",
-                    "Uyghur",
-                    "Ukrainian",
-                    "Urdu",
-                    "Uzbek",
-                    "Vietnamese",
-                    "Xhosa",
-                    "Yiddish",
-                    "Chinese"
-                ],
+                choices=list(language_map.keys()),  # Use language names
                 value="English"
             )
             ocr_run_button = gr.Button("Run OCR")
