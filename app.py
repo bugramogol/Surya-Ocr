@@ -78,12 +78,15 @@ def text_line_detection_function_cli(img):
     if os.path.exists(result_json_path):
         with open(result_json_path, "r", encoding='utf-8') as file:
             result_json = json.load(file)
+            print(result_json)  # Add this line
     else:
         result_json = {"error": "No detection results found"}
 
     # Limpeza movida para depois da leitura dos resultados
     os.remove(img_path)
     logging.info(f"Limpeza concluída para {img_path}")
+    print(result_img_path)  # Add this line
+    print(result_json_path)  # Add this line
     return result_img, result_json
     
 with gr.Blocks() as app:
