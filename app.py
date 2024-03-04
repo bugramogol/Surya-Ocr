@@ -17,6 +17,7 @@ def save_temp_image(img):
     return img_path, temp_dir
 
 def run_command(command):
+    logging.info(f"Executing command: {command}")  # Adiciona o log do comando
     try:
         result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, encoding='utf-8')
         logging.info("Command Output: " + result)
@@ -24,6 +25,7 @@ def run_command(command):
     except subprocess.CalledProcessError as e:
         logging.error(f"Command failed with error: {e.output}")
         return None
+
 
 def ocr_function_cli(img, lang_name):
     img_path, temp_dir = save_temp_image(img)
