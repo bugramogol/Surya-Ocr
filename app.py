@@ -37,30 +37,39 @@ def process_image(image_path, langs):
     logger.info(f"Processing image: {image_path}")
     image = Image.open(image_path)
     
-    # OCR
-    logger.info("Performing OCR...")
-    ocr_predictions = run_ocr([image], [langs.split(',')], det_model, det_processor, rec_model, rec_processor)
+    results = {}
     
-    # Text line detection
-    logger.info("Detecting text lines...")
-    line_predictions = batch_text_detection([image], det_model, det_processor)
-    
-    # Layout analysis
-    logger.info("Analyzing layout...")
-    layout_predictions = batch_layout_detection([image], layout_model, layout_processor, line_predictions)
-    
-    # Reading order
-    logger.info("Determining reading order...")
-    bboxes = [bbox['bbox'] for bbox in layout_predictions[0]['bboxes']]
-    order_predictions = batch_ordering([image], [bboxes], order_model, order_processor)
-    
-    # Combine results
-    results = {
-        "ocr": ocr_predictions[0],
-        "text_lines": line_predictions[0],
-        "layout": layout_predictions[0],
-        "reading_order": order_predictions[0]
-    }
+    try:
+        # OCR
+        logger.info("Performing OCR...")
+        ocr_predictions = run_ocr([image], [langs.split(',')], det_model, det_processor, rec_model, rec_processor)
+        results["ocr"] = ocr_predictions[0]
+        
+        # Text line detection
+        logger.info("Detecting text lines...")
+        line_predictions = batch_text_detection([image], det_model, det_processor)
+        results["text_lines"] = line_predictions[0]
+        
+        # Layout analysis
+        logger.info("Analyzing layout...")
+        layout_predictions = batch_layout_detection([image], layout_model, layout_processor, line_predictions)
+        results["layout"] = layout_predictions[0]
+        
+        # Reading order
+        logger.info("Determining reading order...")
+        logger.debug(f"Layout predictions: {layout_predictions}")
+        
+        if isinstance(layout_predictions[0], dict) and 'bboxes' in layout_predictions[0]:
+            bboxes = [bbox['bbox'] for bbox in layout_predictions[0]['bboxes']]
+            order_predictions = batch_ordering([image], [bboxes], order_model, order_processor)
+            results["reading_order"] = order_predictions[0]
+        else:
+            logger.warning("Layout predictions do not have the expected structure. Skipping reading order detection.")
+            results["reading_order"] = "Reading order detection skipped due to unexpected layout prediction structure."
+        
+    except Exception as e:
+        logger.error(f"Error processing image: {str(e)}", exc_info=True)
+        results["error"] = str(e)
     
     logger.info("Processing complete.")
     return json.dumps(results, indent=2)
@@ -73,7 +82,7 @@ def surya_ui(image, langs):
         result = process_image(image, langs)
         return result
     except Exception as e:
-        logger.error(f"Error processing image: {str(e)}")
+        logger.error(f"Error in UI processing: {str(e)}", exc_info=True)
         return f"An error occurred: {str(e)}"
 
 # Create Gradio interface
