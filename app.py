@@ -33,6 +33,16 @@ logger.info("Compiling OCR model...")
 os.environ['RECOGNITION_STATIC_CACHE'] = 'true'
 rec_model.decoder.model = torch.compile(rec_model.decoder.model)
 
+class SuryaJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, '__dict__'):
+            return {key: self.default(value) for key, value in obj.__dict__.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [self.default(item) for item in obj]
+        elif isinstance(obj, Image.Image):
+            return "PIL.Image.Image object"
+        return super().default(obj)
+
 def process_image(image_path, langs):
     logger.info(f"Processing image: {image_path}")
     image = Image.open(image_path)
@@ -72,7 +82,7 @@ def process_image(image_path, langs):
         results["error"] = str(e)
     
     logger.info("Processing complete.")
-    return json.dumps(results, indent=2)
+    return json.dumps(results, indent=2, cls=SuryaJSONEncoder)
 
 def surya_ui(image, langs):
     if image is None:
