@@ -15,7 +15,10 @@ from surya.settings import settings
 from surya.model.ordering.processor import load_processor as load_order_processor
 from surya.model.ordering.model import load_model as load_order_model
 
-# Configuração de logging mais detalhada
+# Configuração do TorchDynamo
+torch._dynamo.config.capture_scalar_outputs = True
+
+# Configuração de logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -74,6 +77,15 @@ except Exception as e:
     logger.error(f"Erro durante a compilação do modelo de reconhecimento: {e}")
     logger.warning("Continuando sem compilação do modelo")
 
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if hasattr(obj, '__dict__'):
+            return obj.__dict__
+        return super().default(obj)
+
+def serialize_result(result):
+    return json.dumps(result, cls=CustomJSONEncoder, indent=2)
+
 def ocr_workflow(image, langs):
     logger.info(f"Iniciando workflow OCR com idiomas: {langs}")
     try:
@@ -81,10 +93,10 @@ def ocr_workflow(image, langs):
         logger.debug(f"Imagem carregada: {image.size}")
         predictions = run_ocr([image], [langs.split(',')], det_model, det_processor, rec_model, rec_processor)
         logger.info("Workflow OCR concluído com sucesso")
-        return json.dumps(predictions, indent=2)
+        return serialize_result(predictions)
     except Exception as e:
         logger.error(f"Erro durante o workflow OCR: {e}")
-        return json.dumps({"error": str(e)})
+        return serialize_result({"error": str(e)})
 
 def text_detection_workflow(image):
     logger.info("Iniciando workflow de detecção de texto")
@@ -93,10 +105,10 @@ def text_detection_workflow(image):
         logger.debug(f"Imagem carregada: {image.size}")
         predictions = batch_text_detection([image], det_model, det_processor)
         logger.info("Workflow de detecção de texto concluído com sucesso")
-        return json.dumps(predictions, indent=2)
+        return serialize_result(predictions)
     except Exception as e:
         logger.error(f"Erro durante o workflow de detecção de texto: {e}")
-        return json.dumps({"error": str(e)})
+        return serialize_result({"error": str(e)})
 
 def layout_analysis_workflow(image):
     logger.info("Iniciando workflow de análise de layout")
@@ -104,13 +116,13 @@ def layout_analysis_workflow(image):
         image = Image.open(image.name)
         logger.debug(f"Imagem carregada: {image.size}")
         line_predictions = batch_text_detection([image], det_model, det_processor)
-        logger.debug(f"Detecção de linhas concluída. Número de linhas detectadas: {len(line_predictions[0]['bboxes'])}")
+        logger.debug(f"Detecção de linhas concluída. Número de linhas detectadas: {len(line_predictions[0].bboxes)}")
         layout_predictions = batch_layout_detection([image], layout_model, layout_processor, line_predictions)
         logger.info("Workflow de análise de layout concluído com sucesso")
-        return json.dumps(layout_predictions, indent=2)
+        return serialize_result(layout_predictions)
     except Exception as e:
         logger.error(f"Erro durante o workflow de análise de layout: {e}")
-        return json.dumps({"error": str(e)})
+        return serialize_result({"error": str(e)})
 
 def reading_order_workflow(image):
     logger.info("Iniciando workflow de ordem de leitura")
@@ -118,16 +130,16 @@ def reading_order_workflow(image):
         image = Image.open(image.name)
         logger.debug(f"Imagem carregada: {image.size}")
         line_predictions = batch_text_detection([image], det_model, det_processor)
-        logger.debug(f"Detecção de linhas concluída. Número de linhas detectadas: {len(line_predictions[0]['bboxes'])}")
+        logger.debug(f"Detecção de linhas concluída. Número de linhas detectadas: {len(line_predictions[0].bboxes)}")
         layout_predictions = batch_layout_detection([image], layout_model, layout_processor, line_predictions)
-        logger.debug(f"Análise de layout concluída. Número de elementos de layout: {len(layout_predictions[0]['bboxes'])}")
-        bboxes = [pred['bbox'] for pred in layout_predictions[0]['bboxes']]
+        logger.debug(f"Análise de layout concluída. Número de elementos de layout: {len(layout_predictions[0].bboxes)}")
+        bboxes = [pred.bbox for pred in layout_predictions[0].bboxes]
         order_predictions = batch_ordering([image], [bboxes], order_model, order_processor)
         logger.info("Workflow de ordem de leitura concluído com sucesso")
-        return json.dumps(order_predictions, indent=2)
+        return serialize_result(order_predictions)
     except Exception as e:
         logger.error(f"Erro durante o workflow de ordem de leitura: {e}")
-        return json.dumps({"error": str(e)})
+        return serialize_result({"error": str(e)})
 
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
     gr.Markdown("# Análise de Documentos com Surya")
