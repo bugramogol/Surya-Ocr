@@ -1,2 +1,3 @@
 torch
 surya-ocr
+pillow
