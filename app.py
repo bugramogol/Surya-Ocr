@@ -161,7 +161,7 @@ def layout_analysis_workflow(image):
         layout_predictions = batch_layout_detection([image], layout_model, layout_processor, line_predictions)
         
         # Draw bounding boxes on the image
-        image_with_boxes = draw_boxes(image.copy(), layout_predictions, color=(0, 255, 0))
+        image_with_boxes = draw_boxes(image.copy(), layout_predictions[0], color=(0, 255, 0))
         
         # Convert predictions to a serializable format
         serializable_predictions = []
