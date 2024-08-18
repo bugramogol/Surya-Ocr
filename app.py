@@ -82,17 +82,21 @@ class CustomJSONEncoder(json.JSONEncoder):
         if isinstance(obj, Image.Image):
             return "Image object (not serializable)"
         if hasattr(obj, '__dict__'):
-            return obj.__dict__
-        return super().default(obj)
+            return {k: self.default(v) for k, v in obj.__dict__.items()}
+        return str(obj)
 
 def serialize_result(result):
     return json.dumps(result, cls=CustomJSONEncoder, indent=2)
 
 def draw_boxes(image, predictions, color=(255, 0, 0)):
     draw = ImageDraw.Draw(image)
-    for pred in predictions:
-        bbox = pred.get('bbox') or pred.get('polygon')
-        if bbox:
+    if isinstance(predictions, list):
+        for pred in predictions:
+            bbox = pred.bbox if hasattr(pred, 'bbox') else pred.polygon if hasattr(pred, 'polygon') else None
+            if bbox:
+                draw.rectangle(bbox, outline=color, width=2)
+    elif hasattr(predictions, 'bboxes'):
+        for bbox in predictions.bboxes:
             draw.rectangle(bbox, outline=color, width=2)
     return image
 
@@ -104,10 +108,10 @@ def ocr_workflow(image, langs):
         predictions = run_ocr([image], [langs.split(',')], det_model, det_processor, rec_model, rec_processor)
         
         # Draw bounding boxes on the image
-        image_with_boxes = draw_boxes(image.copy(), predictions[0]['text_lines'])
+        image_with_boxes = draw_boxes(image.copy(), predictions[0].text_lines)
         
         # Format the OCR results
-        formatted_text = "\n".join([line['text'] for line in predictions[0]['text_lines']])
+        formatted_text = "\n".join([line.text for line in predictions[0].text_lines])
         
         logger.info("Workflow OCR concluído com sucesso")
         return serialize_result(predictions), image_with_boxes, formatted_text
@@ -123,7 +127,7 @@ def text_detection_workflow(image):
         predictions = batch_text_detection([image], det_model, det_processor)
         
         # Draw bounding boxes on the image
-        image_with_boxes = draw_boxes(image.copy(), predictions[0].bboxes)
+        image_with_boxes = draw_boxes(image.copy(), predictions[0])
         
         logger.info("Workflow de detecção de texto concluído com sucesso")
         return serialize_result(predictions), image_with_boxes
@@ -141,7 +145,7 @@ def layout_analysis_workflow(image):
         layout_predictions = batch_layout_detection([image], layout_model, layout_processor, line_predictions)
         
         # Draw bounding boxes on the image
-        image_with_boxes = draw_boxes(image.copy(), layout_predictions[0].bboxes, color=(0, 255, 0))
+        image_with_boxes = draw_boxes(image.copy(), layout_predictions[0], color=(0, 255, 0))
         
         logger.info("Workflow de análise de layout concluído com sucesso")
         return serialize_result(layout_predictions), image_with_boxes
@@ -163,10 +167,10 @@ def reading_order_workflow(image):
         
         # Draw bounding boxes on the image
         image_with_boxes = image.copy()
-        for i, bbox in enumerate(order_predictions[0]['bboxes']):
-            draw = ImageDraw.Draw(image_with_boxes)
-            draw.rectangle(bbox['bbox'], outline=(0, 0, 255), width=2)
-            draw.text((bbox['bbox'][0], bbox['bbox'][1]), str(bbox['position']), fill=(255, 0, 0))
+        draw = ImageDraw.Draw(image_with_boxes)
+        for i, bbox in enumerate(order_predictions[0].bboxes):
+            draw.rectangle(bbox.bbox, outline=(0, 0, 255), width=2)
+            draw.text((bbox.bbox[0], bbox.bbox[1]), str(bbox.position), fill=(255, 0, 0))
         
         logger.info("Workflow de ordem de leitura concluído com sucesso")
         return serialize_result(order_predictions), image_with_boxes
