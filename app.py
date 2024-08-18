@@ -92,9 +92,13 @@ def draw_boxes(image, predictions, color=(255, 0, 0)):
     draw = ImageDraw.Draw(image)
     if isinstance(predictions, list):
         for pred in predictions:
-            bbox = pred.bbox if hasattr(pred, 'bbox') else pred.polygon if hasattr(pred, 'polygon') else None
-            if bbox:
-                draw.rectangle(bbox, outline=color, width=2)
+            if hasattr(pred, 'bboxes'):
+                for bbox in pred.bboxes:
+                    draw.rectangle(bbox, outline=color, width=2)
+            elif hasattr(pred, 'bbox'):
+                draw.rectangle(pred.bbox, outline=color, width=2)
+            elif hasattr(pred, 'polygon'):
+                draw.polygon(pred.polygon, outline=color, width=2)
     elif hasattr(predictions, 'bboxes'):
         for bbox in predictions.bboxes:
             draw.rectangle(bbox, outline=color, width=2)
@@ -127,10 +131,22 @@ def text_detection_workflow(image):
         predictions = batch_text_detection([image], det_model, det_processor)
         
         # Draw bounding boxes on the image
-        image_with_boxes = draw_boxes(image.copy(), predictions[0])
+        image_with_boxes = draw_boxes(image.copy(), predictions)
+        
+        # Convert predictions to a serializable format
+        serializable_predictions = []
+        for pred in predictions:
+            serializable_pred = {
+                'bboxes': [bbox.tolist() if hasattr(bbox, 'tolist') else bbox for bbox in pred.bboxes],
+                'polygons': [poly.tolist() if hasattr(poly, 'tolist') else poly for poly in pred.polygons],
+                'confidences': pred.confidences,
+                'vertical_lines': [line.tolist() if hasattr(line, 'tolist') else line for line in pred.vertical_lines],
+                'image_bbox': pred.image_bbox.tolist() if hasattr(pred.image_bbox, 'tolist') else pred.image_bbox
+            }
+            serializable_predictions.append(serializable_pred)
         
         logger.info("Workflow de detecção de texto concluído com sucesso")
-        return serialize_result(predictions), image_with_boxes
+        return serialize_result(serializable_predictions), image_with_boxes
     except Exception as e:
         logger.error(f"Erro durante o workflow de detecção de texto: {e}")
         return serialize_result({"error": str(e)}), None
@@ -145,10 +161,26 @@ def layout_analysis_workflow(image):
         layout_predictions = batch_layout_detection([image], layout_model, layout_processor, line_predictions)
         
         # Draw bounding boxes on the image
-        image_with_boxes = draw_boxes(image.copy(), layout_predictions[0], color=(0, 255, 0))
+        image_with_boxes = draw_boxes(image.copy(), layout_predictions, color=(0, 255, 0))
+        
+        # Convert predictions to a serializable format
+        serializable_predictions = []
+        for pred in layout_predictions:
+            serializable_pred = {
+                'bboxes': [
+                    {
+                        'bbox': bbox.bbox.tolist() if hasattr(bbox.bbox, 'tolist') else bbox.bbox,
+                        'polygon': bbox.polygon.tolist() if hasattr(bbox.polygon, 'tolist') else bbox.polygon,
+                        'confidence': bbox.confidence,
+                        'label': bbox.label
+                    } for bbox in pred.bboxes
+                ],
+                'image_bbox': pred.image_bbox.tolist() if hasattr(pred.image_bbox, 'tolist') else pred.image_bbox
+            }
+            serializable_predictions.append(serializable_pred)
         
         logger.info("Workflow de análise de layout concluído com sucesso")
-        return serialize_result(layout_predictions), image_with_boxes
+        return serialize_result(serializable_predictions), image_with_boxes
     except Exception as e:
         logger.error(f"Erro durante o workflow de análise de layout: {e}")
         return serialize_result({"error": str(e)}), None
