@@ -15,7 +15,67 @@ from surya.settings import settings
 from surya.model.ordering.processor import load_processor as load_order_processor
 from surya.model.ordering.model import load_model as load_order_model
 
-# ... (rest of the imports and configurations remain the same)
+# Configuração do TorchDynamo
+torch._dynamo.config.capture_scalar_outputs = True
+
+# Configuração de logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Configuração de variáveis de ambiente
+logger.info("Configurando variáveis de ambiente para otimização de performance")
+os.environ["RECOGNITION_BATCH_SIZE"] = "512"
+os.environ["DETECTOR_BATCH_SIZE"] = "36"
+os.environ["ORDER_BATCH_SIZE"] = "32"
+os.environ["RECOGNITION_STATIC_CACHE"] = "true"
+
+# Carregamento de modelos
+logger.info("Iniciando carregamento dos modelos...")
+
+try:
+    logger.debug("Carregando modelo e processador de detecção...")
+    det_processor, det_model = load_det_processor(), load_det_model()
+    logger.debug("Modelo e processador de detecção carregados com sucesso")
+except Exception as e:
+    logger.error(f"Erro ao carregar modelo de detecção: {e}")
+    raise
+
+try:
+    logger.debug("Carregando modelo e processador de reconhecimento...")
+    rec_model, rec_processor = load_rec_model(), load_rec_processor()
+    logger.debug("Modelo e processador de reconhecimento carregados com sucesso")
+except Exception as e:
+    logger.error(f"Erro ao carregar modelo de reconhecimento: {e}")
+    raise
+
+try:
+    logger.debug("Carregando modelo e processador de layout...")
+    layout_model = load_det_model(checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
+    layout_processor = load_det_processor(checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
+    logger.debug("Modelo e processador de layout carregados com sucesso")
+except Exception as e:
+    logger.error(f"Erro ao carregar modelo de layout: {e}")
+    raise
+
+try:
+    logger.debug("Carregando modelo e processador de ordenação...")
+    order_model = load_order_model()
+    order_processor = load_order_processor()
+    logger.debug("Modelo e processador de ordenação carregados com sucesso")
+except Exception as e:
+    logger.error(f"Erro ao carregar modelo de ordenação: {e}")
+    raise
+
+logger.info("Todos os modelos foram carregados com sucesso")
+
+# Compilação do modelo de reconhecimento
+logger.info("Iniciando compilação do modelo de reconhecimento...")
+try:
+    rec_model.decoder.model = torch.compile(rec_model.decoder.model)
+    logger.info("Compilação do modelo de reconhecimento concluída com sucesso")
+except Exception as e:
+    logger.error(f"Erro durante a compilação do modelo de reconhecimento: {e}")
+    logger.warning("Continuando sem compilação do modelo")
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):
