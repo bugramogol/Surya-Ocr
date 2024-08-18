@@ -13,8 +13,7 @@ from surya.model.recognition.model import load_model as load_rec_model
 from surya.model.recognition.processor import load_processor as load_rec_processor
 from surya.settings import settings
 from surya.model.ordering.processor import load_processor as load_order_processor
-from surya.model.ordering.model import load_order_model
-import io
+# Removemos a importação problemática e usaremos uma alternativa
 
 # Configuração de logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -35,8 +34,10 @@ det_processor, det_model = load_det_processor(), load_det_model()
 rec_model, rec_processor = load_rec_model(), load_rec_processor()
 layout_model = load_det_model(checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
 layout_processor = load_det_processor(checkpoint=settings.LAYOUT_MODEL_CHECKPOINT)
-order_model = load_order_model()
 order_processor = load_order_processor()
+# Vamos tentar carregar o modelo de ordenação de uma maneira diferente
+from surya.model.ordering import model as order_model_module
+order_model = order_model_module.Model()
 
 # Compilação do modelo de reconhecimento
 logger.info("Compilando modelo de reconhecimento...")
