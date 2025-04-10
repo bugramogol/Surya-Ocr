@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "surya-ocr.fullname" . }}
+  labels:
+    {{- include "surya-ocr.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "surya-ocr.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "surya-ocr.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: RECOGNITION_STATIC_CACHE
+              value: {{ .Values.config.recognitionStaticCache | quote }}
+            {{- if .Values.gpuEnabled }}
+            # GPU yapılandırması
+            - name: RECOGNITION_BATCH_SIZE
+              value: {{ .Values.config.gpu.recognitionBatchSize | quote }}
+            - name: DETECTOR_BATCH_SIZE
+              value: {{ .Values.config.gpu.detectorBatchSize | quote }}
+            - name: ORDER_BATCH_SIZE
+              value: {{ .Values.config.gpu.orderBatchSize | quote }}
+            - name: TORCH_DEVICE
+              value: {{ .Values.config.gpu.torchDevice | quote }}
+            - name: SURYA_USE_CUDA
+              value: {{ .Values.config.gpu.suryaUseCuda | quote }}
+            - name: CUDA_VISIBLE_DEVICES
+              value: {{ .Values.config.gpu.cudaVisibleDevices | quote }}
+            - name: PYTORCH_CUDA_ALLOC_CONF
+              value: {{ .Values.config.gpu.pytorchCudaAllocConf | quote }}
+            {{- else }}
+            # CPU yapılandırması
+            - name: RECOGNITION_BATCH_SIZE
+              value: {{ .Values.config.cpu.recognitionBatchSize | quote }}
+            - name: DETECTOR_BATCH_SIZE
+              value: {{ .Values.config.cpu.detectorBatchSize | quote }}
+            - name: ORDER_BATCH_SIZE
+              value: {{ .Values.config.cpu.orderBatchSize | quote }}
+            - name: TORCH_DEVICE
+              value: {{ .Values.config.cpu.torchDevice | quote }}
+            - name: SURYA_USE_CUDA
+              value: {{ .Values.config.cpu.suryaUseCuda | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: pdf-volume
+              mountPath: /app/pdf
+            - name: uploads-volume
+              mountPath: /app/uploads
+          resources:
+            {{- if .Values.gpuEnabled }}
+            {{- toYaml .Values.resources.gpu | nindent 12 }}
+            {{- else }}
+            {{- toYaml .Values.resources.cpu | nindent 12 }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            {{- if .Values.gpuEnabled }}
+            initialDelaySeconds: {{ .Values.probes.gpu.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.gpu.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.gpu.liveness.timeoutSeconds }}
+            {{- else }}
+            initialDelaySeconds: {{ .Values.probes.cpu.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.cpu.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.cpu.liveness.timeoutSeconds }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            {{- if .Values.gpuEnabled }}
+            initialDelaySeconds: {{ .Values.probes.gpu.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.gpu.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.gpu.readiness.timeoutSeconds }}
+            {{- else }}
+            initialDelaySeconds: {{ .Values.probes.cpu.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.cpu.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.cpu.readiness.timeoutSeconds }}
+            {{- end }}
+      {{- if .Values.gpuEnabled }}
+      # NVIDIA GPU için runtime konfigürasyonu
+      runtimeClassName: nvidia
+      {{- end }}
+      volumes:
+        - name: pdf-volume
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "surya-ocr.fullname" . }}-pdf
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: uploads-volume
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "surya-ocr.fullname" . }}-uploads
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }} 

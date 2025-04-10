@@ -1,0 +1,332 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+.upload-container {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    transition: all 0.3s ease;
+}
+
+.upload-container:hover {
+    border-color: #3498db;
+}
+
+.file-input {
+    display: none;
+}
+
+.upload-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.upload-button:hover {
+    background-color: #2980b9;
+}
+
+.file-list {
+    margin-top: 20px;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background-color: #fff;
+}
+
+.file-icon {
+    margin-right: 10px;
+    color: #7f8c8d;
+}
+
+.file-name {
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-status {
+    margin-left: 10px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+.file-status.pending {
+    background-color: #f1c40f;
+    color: #fff;
+}
+
+.file-status.processing {
+    background-color: #3498db;
+    color: #fff;
+}
+
+.file-status.completed {
+    background-color: #2ecc71;
+    color: #fff;
+}
+
+.file-status.error {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.process-button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.process-button:hover {
+    background-color: #27ae60;
+}
+
+.process-button:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.view-pdf-button {
+    background-color: #e67e22;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.view-pdf-button:hover {
+    background-color: #d35400;
+}
+
+.remove-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.remove-button:hover {
+    background-color: #c0392b;
+}
+
+.progress-bar-container {
+    height: 10px;
+    margin-top: 5px;
+    width: 100%;
+    background-color: #ecf0f1;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #3498db;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.loader {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+    display: none;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.message {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* OCR Results Dropdown Styles */
+.results-container {
+    margin-top: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.results-header {
+    background-color: #f5f5f5;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.results-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.results-header:hover {
+    background-color: #e8e8e8;
+}
+
+.results-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
+}
+
+.results-content.open {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.ocr-results {
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-top: 1px solid #e0e0e0;
+    font-family: monospace;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.file-item.with-text .file-text {
+    display: none;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
+.file-item.with-text.expanded .file-text {
+    display: block;
+}
+
+.file-item .toggle-text {
+    color: #3498db;
+    cursor: pointer;
+    margin-left: 10px;
+    font-size: 12px;
+}
+
+/* GPU Info Styles */
+.gpu-info {
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    border-left: 4px solid #3498db;
+}
+
+.gpu-info i {
+    color: #3498db;
+    margin-right: 8px;
+}
+
+.gpu-info.gpu-active {
+    border-left-color: #2ecc71;
+}
+
+.gpu-info.gpu-active i {
+    color: #2ecc71;
+}
+
+.gpu-info.cpu-active {
+    border-left-color: #e74c3c;
+}
+
+.gpu-info.cpu-active i {
+    color: #e74c3c;
+}
+
+.processing-time {
+    font-size: 13px;
+    color: #7f8c8d;
+    margin-top: 5px;
+    flex-basis: 100%;
+} 

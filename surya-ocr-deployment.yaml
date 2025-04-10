@@ -1,0 +1,113 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: surya-ocr-config
+  labels:
+    app: surya-ocr
+data:
+  RECOGNITION_BATCH_SIZE: "512"
+  DETECTOR_BATCH_SIZE: "36"
+  ORDER_BATCH_SIZE: "32"
+  RECOGNITION_STATIC_CACHE: "true"
+  TORCH_DEVICE: "cpu"  # GPU kullanımı için "cuda" olarak değiştirin
+  SURYA_USE_CUDA: "0"  # GPU kullanımı için "1" olarak değiştirin
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: surya-ocr-pdf-pvc
+  labels:
+    app: surya-ocr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: surya-ocr-uploads-pvc
+  labels:
+    app: surya-ocr
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: surya-ocr
+  labels:
+    app: surya-ocr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: surya-ocr
+  template:
+    metadata:
+      labels:
+        app: surya-ocr
+    spec:
+      containers:
+      - name: surya-ocr
+        image: abmogol/surya-ocr:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: surya-ocr-config
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
+          limits:
+            memory: "4Gi"
+            cpu: "2"
+        volumeMounts:
+        - name: pdf-volume
+          mountPath: /app/pdf
+        - name: uploads-volume
+          mountPath: /app/uploads
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 20
+      volumes:
+      - name: pdf-volume
+        persistentVolumeClaim:
+          claimName: surya-ocr-pdf-pvc
+      - name: uploads-volume
+        persistentVolumeClaim:
+          claimName: surya-ocr-uploads-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: surya-ocr-service
+  labels:
+    app: surya-ocr
+spec:
+  type: LoadBalancer  # LoadBalancer, NodePort veya ClusterIP olarak değiştirilebilir
+  ports:
+  - port: 80
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+    app: surya-ocr 

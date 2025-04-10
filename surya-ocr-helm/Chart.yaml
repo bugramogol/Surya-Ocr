@@ -1,0 +1,14 @@
+apiVersion: v2
+name: surya-ocr
+description: A Helm chart for Surya OCR API with web interface
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - ocr
+  - surya
+  - api
+home: https://github.com/yourusername/surya-ocr
+maintainers:
+  - name: Your Name
+    email: your.email@example.com 

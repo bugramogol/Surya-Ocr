@@ -1,0 +1,120 @@
+# Surya OCR Helm Chart Values
+
+replicaCount: 1
+
+image:
+  repository: abmogol/surya-ocr
+  pullPolicy: Always
+  tag: "latest"
+
+nameOverride: ""
+fullnameOverride: ""
+
+gpuEnabled: false  # GPU kullanımı için true yapın
+
+config:
+  # CPU ayarları
+  cpu:
+    recognitionBatchSize: "512"
+    detectorBatchSize: "36"
+    orderBatchSize: "32"
+    torchDevice: "cpu"
+    suryaUseCuda: "0"
+  
+  # GPU ayarları
+  gpu:
+    recognitionBatchSize: "1024"
+    detectorBatchSize: "64"
+    orderBatchSize: "64"
+    torchDevice: "cuda"
+    suryaUseCuda: "1"
+    cudaVisibleDevices: "0"
+    pytorchCudaAllocConf: "max_split_size_mb:512"
+
+  # Ortak ayarlar
+  recognitionStaticCache: "true"
+
+service:
+  type: ClusterIP  # LoadBalancer, NodePort veya ClusterIP
+  port: 80
+  targetPort: 5000
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "16m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+  hosts:
+    - host: ocr.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: ocr-tls-secret
+  #    hosts:
+  #      - ocr.example.com
+
+resources:
+  # CPU için resource limitleri
+  cpu:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+    limits:
+      memory: "4Gi"
+      cpu: "2"
+  
+  # GPU için resource limitleri
+  gpu:
+    requests:
+      memory: "4Gi"
+      cpu: "2"
+      nvidia.com/gpu: 1
+    limits:
+      memory: "8Gi"
+      cpu: "4"
+      nvidia.com/gpu: 1
+
+persistence:
+  enabled: true
+  pdf:
+    size: 1Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+  uploads:
+    size: 1Gi
+    storageClass: ""
+    accessMode: ReadWriteOnce
+
+probes:
+  # CPU için probe ayarları
+  cpu:
+    readiness:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+    liveness:
+      initialDelaySeconds: 60
+      periodSeconds: 20
+      timeoutSeconds: 5
+  
+  # GPU için probe ayarları (daha uzun başlama süreleri)
+  gpu:
+    readiness:
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      timeoutSeconds: 10
+    liveness:
+      initialDelaySeconds: 120
+      periodSeconds: 30
+      timeoutSeconds: 10
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {} 
