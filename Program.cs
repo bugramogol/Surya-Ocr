@@ -7,6 +7,7 @@ using System.IO;
 using SuryaOcrClient;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -253,7 +254,7 @@ app.MapPost("/ocr-url", async (HttpContext context, SuryaOcrClient.SuryaOcrClien
         // Get image URL and languages from request
         using var reader = new StreamReader(context.Request.Body);
         var requestBody = await reader.ReadToEndAsync();
-        var requestData = System.Text.Json.JsonSerializer.Deserialize<UrlRequestData>(requestBody);
+        var requestData = JsonConvert.DeserializeObject<UrlRequestData>(requestBody);
         
         if (string.IsNullOrEmpty(requestData?.ImageUrl))
         {

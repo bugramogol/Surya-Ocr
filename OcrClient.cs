@@ -1,27 +1,26 @@
 using System;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.IO;
 using System.Threading.Tasks;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace SuryaOcrClient
 {
     public class OcrResult
     {
-        [JsonPropertyName("text")]
+        [JsonProperty("text")]
         public string Text { get; set; }
         
-        [JsonPropertyName("details")]
+        [JsonProperty("details")]
         public List<TextDetail> Details { get; set; }
         
         public class TextDetail
         {
-            [JsonPropertyName("text")]
+            [JsonProperty("text")]
             public string Text { get; set; }
             
-            [JsonPropertyName("bbox")]
+            [JsonProperty("bbox")]
             public float[] BoundingBox { get; set; }
         }
     }
@@ -54,7 +53,8 @@ namespace SuryaOcrClient
             
             // Handle the response
             response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadFromJsonAsync<OcrResult>();
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<OcrResult>(responseContent);
             
             return result;
         }
@@ -82,7 +82,8 @@ namespace SuryaOcrClient
             
             // Handle the response
             response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadFromJsonAsync<OcrResult>();
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var result = JsonConvert.DeserializeObject<OcrResult>(responseContent);
             
             return result;
         }

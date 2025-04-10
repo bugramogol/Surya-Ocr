@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using SuryaOcrClient;
+using Newtonsoft.Json;
 
 namespace SuryaOcrConsoleExample
 {
